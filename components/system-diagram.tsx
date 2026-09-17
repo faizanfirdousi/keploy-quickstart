@@ -203,11 +203,11 @@ function RequestDot({ path }: { path: string }) {
     <circle className="sysdiag-dot" r="4.5" fill="#f97316">
       <animateMotion
         path={path}
-        dur="6.8s"
+        dur="5.2s"
         repeatCount="indefinite"
         calcMode="linear"
-        keyTimes="0;0.16;0.22;0.38;0.48;0.64;0.70;0.86;1"
-        keyPoints="0;0.143;0.143;0.5;0.5;0.64;0.64;1;1"
+        keyTimes="0;0.46;0.54;1"
+        keyPoints="0;0.5;0.5;1"
       />
     </circle>
   );
