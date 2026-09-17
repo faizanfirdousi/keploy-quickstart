@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #fafafa;
+  --foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --border: #e4e4e7;
+  --accent: #2563eb;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --accent: #60a5fa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Code snippets: rehype-pretty-code + Catppuccin Mocha */
+pre code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+.prose [data-rehype-pretty-code-figure] {
+  margin-block: 1.5rem;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 0.75rem;
+  background: #1e1e2e;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.28);
+}
+
+.prose [data-rehype-pretty-code-title] {
+  margin: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 0.55rem 0.85rem 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.prose [data-rehype-pretty-code-figure] pre {
+  margin: 0;
+  border: none;
+  background: transparent !important;
+  padding-block: 0;
+}
+
+.prose [data-rehype-pretty-code-figure] code {
+  display: grid;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+.prose [data-rehype-pretty-code-figure] [data-line] {
+  padding-inline: 1rem;
+  border-left: 2px solid transparent;
+}
+
+.prose [data-rehype-pretty-code-figure] [data-highlighted-line],
+.prose [data-rehype-pretty-code-figure] [data-highlighted] {
+  background: rgb(137 180 250 / 0.1);
+  border-left-color: #89b4fa;
+}
+
+.prose [data-rehype-pretty-code-figure] .diff.add {
+  background: rgb(166 227 161 / 0.1);
+}
+
+.prose [data-rehype-pretty-code-figure] .diff.remove {
+  background: rgb(243 139 168 / 0.12);
+}
+
+.prose :where(code):not(:where(pre *)) {
+  font-weight: 500;
+  background: color-mix(in oklab, var(--muted) 80%, transparent);
+  padding: 0.15em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sysdiag-dot {
+    display: none;
+  }
+}
