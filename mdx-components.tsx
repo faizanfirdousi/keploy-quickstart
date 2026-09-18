@@ -5,6 +5,8 @@ import { PreWithCopy } from '@/components/pre-with-copy';
 import { SystemDiagram } from '@/components/system-diagram';
 import { RecordDiagram } from '@/components/record-diagram';
 import { ReplayDiagram } from '@/components/replay-diagram';
+import { RecordTerminalGif } from '@/components/record-terminal-gif';
+import { TestTerminalGif } from '@/components/test-terminal-gif';
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -19,6 +21,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     SystemDiagram,
     RecordDiagram,
     ReplayDiagram,
+    RecordTerminalGif,
+    TestTerminalGif,
     ...components,
   };
 }
