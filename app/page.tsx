@@ -4,7 +4,7 @@ import { Hero } from '@/components/hero';
 import { TableOfContents } from '@/components/table-of-contents';
 import { ReadingProgressBar } from '@/components/reading-progress-bar';
 import { BackToTop } from '@/components/back-to-top';
-import TutorialContent from '@/content/tutorial.mdx';
+import TutorialContent from '@/doc/tutorial-entry';
 
 export default function Page() {
   return (

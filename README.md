@@ -22,9 +22,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Project layout
 
-- `content/tutorial.mdx` — tutorial article (MDX)
+- `doc/tutorial.mdx` and `doc/tutorial-revised.mdx` — tutorial articles (MDX)
+- `doc/tutorial-entry.ts` — **switch which MDX file the site renders** (change the import there)
 - `components/` — Callout, Steps, TOC, theme toggle, etc.
 - `app/page.tsx` — page shell (header, hero, article, footer)
+- `docs/` — project notes (PRD/SOP only)
 
 ## Deployment
 

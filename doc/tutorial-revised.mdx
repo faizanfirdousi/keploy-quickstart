@@ -1,0 +1,309 @@
+export const metadata = {
+  title: 'Keploy Go Quickstart Tutorial',
+  description:
+    'Integration and E2E testing for your Go application with Keploy.',
+};
+
+## What you'll learn
+
+By the end of this tutorial, you'll know how to:
+
+- Run the Go URL shortener with PostgreSQL locally.
+- Record real API traffic with Keploy.
+- Inspect the generated test cases and PostgreSQL mocks.
+- Replay those test cases without relying on a live database.
+- See the difference between Keploy's record and test phases.
+
+## Problem with Traditional Testing
+
+Traditionally, API testing is very manual and maintenance-heavy. For integration and API flows especially, you often end up manually defining test cases and keeping expected responses and dependency state in sync as the app changes. Even though it is doable for small use cases or when the application has fewer dependencies, once you add databases, queues, and third-party APIs, the maintenance burden can grow significantly.
+
+Integration testing is very painful because to reproduce the exact environment, you need to set up databases with the correct schema, configure environment variables, and prepare everything in the exact way it is supposed to work. The other way is to make mocks for each external dependency, but they simulate what developers _expect_ a dependency to do rather than necessarily reflecting what that dependency actually does in production.
+
+## How Keploy Solves This
+
+Keploy solves pretty much all of this pain by taking an approach where you don't have to manually build the initial test cases, expected responses, and dependency mocks for the flows you exercise. Instead, Keploy captures the application's real interactions and uses them to generate reproducible test cases and mocks. This lets your tests reflect how the application actually behaves, while reducing the effort of maintaining test data and external dependencies. But how does this actually work inside a Go application? Let's build a simple example and walk through the process step by step.
+
+The recorded flow in this tutorial exercises the Go app together with PostgreSQL (integration-style testing). Because we drive everything through HTTP rather than calling internal functions directly, it also shows an end-to-end API workflow.
+
+## How the Sample Application Works
+
+For this tutorial, we'll use a small Go-based URL shortener built with Echo. The `POST /url` endpoint takes a long URL, generates an 8-character short ID, stores the mapping in PostgreSQL, and returns the shortened URL. A `GET /:id` request looks up that ID in PostgreSQL and redirects the client back to the original URL.
+
+The application is simple, but it has a real external dependency: PostgreSQL. This makes it useful for understanding Keploy because we'll be able to see how Keploy captures not just the API interaction, but also the application's interaction with its database.
+
+<SystemDiagram />
+
+```json
+POST /url
+{"url": "https://github.com"}
+```
+
+## Prerequisites
+
+Before starting, ensure your environment meets the following requirements:
+
+- **Go 1.20+** installed
+- **Docker** and Docker Compose installed and running (to run the PostgreSQL dependency)
+- **Linux or WSL environment supported by Keploy.** This tutorial was tested on Ubuntu under WSL2 with native Keploy. Check the current [Keploy Linux installation requirements](https://keploy.io/docs/installation/linux-installation/) for supported kernel and tracing setup on your machine.
+- **Keploy CLI installed.** See the [Keploy Installation Guide](https://keploy.io/docs/server/installation/) for native script and Docker installation options:
+
+  ```bash
+  curl --silent -O -L https://keploy.io/install.sh && source install.sh
+  ```
+
+  Then verify it worked:
+
+  ```bash
+  keploy version
+  ```
+
+- **A terminal** with `curl` available to send test requests
+
+## Setup the Application
+
+Clone the sample repository and move into the echo-sql directory:
+
+```bash
+git clone https://github.com/keploy/samples-go.git
+cd samples-go/echo-sql
+go mod download
+```
+
+Open `main.go` and change the PostgreSQL host from `postgresDb` to `localhost`:
+
+```go
+Database, err = NewConnection(ctx, ConnectionDetails{
+	host: "postgresDb", // [!code --]
+	host: "localhost",  // [!code ++]
+	port: "5432",
+	user: "postgres",
+	password: "password",
+	dbName: "keploy",
+})
+```
+
+### Start PostgreSQL
+
+```bash
+docker compose up -d postgres
+docker compose ps
+```
+
+Wait until the PostgreSQL container reports a `healthy` status before continuing:
+
+```text
+NAME         IMAGE           COMMAND                  SERVICE    CREATED          STATUS                   PORTS
+postgresDb   postgres:10.5   "docker-entrypoint.s…"   postgres   12 seconds ago   Up 11 seconds (healthy)   0.0.0.0:5432->5432/tcp
+```
+
+<Callout type="note">
+**Note:** I initially tried running the Go application through Docker Compose with Keploy, but the Keploy agent failed to initialize its eBPF hooks with `neither debugfs nor tracefs are mounted`. The agent container could not access the required Linux tracing filesystem (`tracefs`/`debugfs`), so it exited before the Go application started. Running Keploy natively on the host worked around that container-level tracing limitation.
+</Callout>
+
+### Build and Run the Go Server
+
+```bash
+go build -o echo-psql-url-shortener .
+./echo-psql-url-shortener
+```
+
+### Try the API
+
+```bash
+curl -sS --request POST \
+  --url http://localhost:8082/url \
+  --header 'Content-Type: application/json' \
+  --data '{"url": "https://github.com"}'
+```
+
+You will get a JSON response with the shortened URL. The `ts` value and short ID will be different on your machine; example response:
+
+```json
+{
+  "ts": 1789649631988852376,
+  "url":"http://localhost:8082/4KepjkTT"
+}
+```
+
+Copy the short ID from the `url` field (the part after the last `/`). Now verify the redirect. For example, if your response had `4KepjkTT`:
+
+```bash
+curl -i "http://localhost:8082/<short-id>"
+```
+
+You should see a redirect status (like `308`) and a `Location` header pointing at `https://github.com`. To follow the redirect in one go:
+
+```bash
+curl -iL "http://localhost:8082/<short-id>"
+```
+
+Or open the short URL in the browser: `http://localhost:8082/<short-id>`
+
+Stop the server with `Ctrl+C` before we move on to recording.
+
+## Record Real Traffic with Keploy
+
+The first thing we need to do is record with Keploy. What are we recording? **The real interactions happening while your application handles an API request.** In record mode, Keploy captures the incoming API request and the application's outgoing interactions with dependencies such as PostgreSQL, then uses those captures to generate a reproducible test case and the corresponding mocks.
+
+For our application, that means we don't need to manually write a test for `POST /url`, define what the response should look like, or create a mock PostgreSQL response. We simply run the application through Keploy, make the API calls we want to test, and **Keploy turns those real interactions into test data that it can replay later**.
+
+<RecordDiagram />
+
+So let's start the application in record mode and make the same kind of requests we used above.
+
+On Linux, Keploy's native eBPF workflow needs elevated privileges, so we use `sudo`. The `-E PATH=$PATH` part keeps your current `PATH` available when running through `sudo`.
+
+```bash
+sudo -E PATH=$PATH keploy record -c "./echo-psql-url-shortener"
+```
+
+Once Keploy starts, leave that terminal running and open another terminal to send API requests. We'll record both the URL creation flow and the redirect flow so Keploy captures the database work for `POST /url` and `GET /:id`.
+
+```bash
+curl -sS --request POST \
+  --url http://localhost:8082/url \
+  --header 'Content-Type: application/json' \
+  --data '{"url": "https://github.com"}'
+```
+
+and (use the short ID from that response)
+
+```bash
+curl -i "http://localhost:8082/<short-id>"
+```
+
+<RecordTerminalGif />
+
+While recording, **PostgreSQL is still real.** Requests go through Keploy to the Go app and into the live database so Keploy can observe both the HTTP traffic and the dependency calls:
+
+```text
+curl → Keploy (observes) → Go application → PostgreSQL (real)
+```
+
+When you're done, stop Keploy with `Ctrl+C` in the record terminal.
+
+## Inspect the Recorded Test Cases and Mocks
+
+When you ran `keploy record`, Keploy started your application under its instrumentation and captured the interactions happening while we made those API requests. The requests still went to the real PostgreSQL database, so Keploy could observe both the API request/response and the application's interactions with PostgreSQL.
+
+Keploy then uses these captured interactions to generate the test cases and mocks needed to replay the same flow later. All of this gets stored inside the `keploy` directory.
+
+Let's open the `keploy` directory and see what Keploy generated for us:
+
+```bash
+find keploy -type f | head -20
+```
+
+After recording into `test-set-1`, the layout looked like this on my machine:
+
+```text
+keploy/test-set-1/
+├── config.yaml
+├── mappings.yaml
+├── mocks.yaml
+└── tests/
+    ├── post-url-1.yaml
+    ├── get-4kepjktt-1.yaml
+    └── ...
+```
+
+You'll find the recorded **test cases** (API requests and responses) under `tests/`, and **mocks** with the captured PostgreSQL interactions in `mocks.yaml`. These are the artifacts Keploy will use when we replay and verify behavior.
+
+### Test case
+
+Here's an excerpt from `keploy/test-set-1/tests/post-url-1.yaml` (generated by Keploy 3.8.32 on my run):
+
+```yaml
+kind: Http
+name: post-url-1
+spec:
+  req:
+    method: POST
+    url: http://localhost:8082/url
+    body: '{"url": "https://github.com"}'
+  resp:
+    status_code: 200
+    body: |
+      {"ts":1789649631988852376,"url":"http://localhost:8082/4KepjkTT"}
+  assertions:
+    noise:
+      body.ts: []
+```
+
+And from the redirect test (`get-4kepjktt-1.yaml` in my recording):
+
+```yaml
+spec:
+  req:
+    method: GET
+    url: http://localhost:8082/4KepjkTT
+  resp:
+    status_code: 308
+    header:
+      Location: https://github.com
+```
+
+Your filenames may differ if your short ID is not `4KepjkTT`.
+
+### PostgreSQL mock
+
+`mocks.yaml` contains the database traffic Keploy observed. In Keploy 3.x these show up as `kind: PostgresV3`. For example, an `INSERT` into `url_map` and the response PostgreSQL returned:
+
+```yaml
+kind: PostgresV3
+name: mock-5
+spec:
+  postgresV3:
+    type: query
+    query:
+      sqlNormalized: |
+        INSERT INTO url_map (id, redirect_url, created_at, updated_at)
+        VALUES ($1, $2, $3, $4)
+      response:
+        commandComplete: INSERT 0 1
+```
+
+Now that we can see what was captured, let's replay it.
+
+### Run the Captured Test Cases
+
+Now that we have our test cases captured, let's replay `test-set-1`:
+
+```bash
+sudo -E PATH=$PATH keploy test -c "./echo-psql-url-shortener" --test-sets test-set-1
+```
+
+<TestTerminalGif />
+
+<Callout type="note">
+**Note:** I ran `keploy test` without limiting test sets and it failed immediately: the repo still had an older `keploy/test-set-0` whose PostgreSQL mocks use the legacy Postgres format, which the Keploy version I was running could not load, so replay never reached the tests I had just recorded in `test-set-1`. I use `--test-sets test-set-1` so only the current recording is replayed and PostgreSQL is mocked from the mocks generated in that test set (the `PostgresV3` entries in `mocks.yaml`).
+</Callout>
+
+Once you run `keploy test`, Keploy starts the application again and replays the recorded API requests against it. **During testing, PostgreSQL is mocked.** Instead of connecting to the real database, Keploy uses the mocks captured during recording, so the application gets the same database responses it saw earlier:
+
+```text
+Recorded request → Go application → Keploy mock → recorded DB response
+```
+
+Keploy compares the responses from replay with the recorded responses (and runs assertions) to report whether the test passed or failed.
+
+<ReplayDiagram />
+
+The important part is what we **didn't** have to do: we didn't write the test cases, manually create database mocks, or set up PostgreSQL again for the replay run. We exercised real flows, Keploy generated the artifacts, and we replayed them. As the application grows, adding coverage can start with simply exercising the application, then reviewing and maintaining the generated test cases and mocks as things change.
+
+## Troubleshooting
+
+If Keploy fails inside Docker with `neither debugfs nor tracefs are mounted`, see the note in setup above: native Keploy on the host avoided that for this tutorial.
+
+If `keploy test` fails before running your new tests, check for older `keploy/test-set-*` folders with incompatible mocks and pass `--test-sets` for the set you just recorded.
+
+## Cleanup
+
+When you're finished:
+
+```bash
+docker compose down
+```
+
+That stops the PostgreSQL container. You can keep the `keploy/` folder to replay tests later, or remove it before a fresh recording.

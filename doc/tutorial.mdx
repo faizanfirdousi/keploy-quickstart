@@ -77,7 +77,9 @@ NAME         IMAGE           COMMAND                  SERVICE    CREATED        
 postgresDb   postgres:10.5   "docker-entrypoint.s…"   postgres   12 seconds ago   Up 11 seconds (healthy)   0.0.0.0:5432->5432/tcp
 ```
 
+<Callout type="note">
 **Note:** I initially tried running the Go application through Docker Compose with Keploy, but the Keploy agent failed to initialize its eBPF hooks with `neither debugfs nor tracefs are mounted`. The agent container could not access the required Linux tracing filesystem (`tracefs`), so it exited before the Go application started; running Keploy natively on the host worked because the host already had the required tracing interfaces available.
+</Callout>
 
 
 ### Build and Run the Go Server
@@ -161,12 +163,14 @@ Now let's understand what each of these files contains and how Keploy uses them 
 Now that we have our testcase captured, run the test file.
 
 ```bash
-sudo -E PATH=$PATH keploy test -c "./echo-psql-url-shortener" --test-sets test-set-1`
+sudo -E PATH=$PATH keploy test -c "./echo-psql-url-shortener" --test-sets test-set-1
 ```
 
 <TestTerminalGif />
 
+<Callout type="note">
 **Note:** I ran `keploy test` without limiting test sets and it failed immediately: the repo still had an older `keploy/test-set-0` whose PostgreSQL mocks use the legacy Postgres format, which Keploy 3.x cannot load, so replay never reached the tests I had just recorded in `test-set-1`. I use `--test-sets test-set-1` so only the current recording is replayed and PostgreSQL is mocked from those PostgresV3 mocks.
+</Callout>
 
 Once you run `keploy test`, Keploy starts the application again and replays the recorded API requests against it. Instead of connecting to the real PostgreSQL database, Keploy uses the mocks captured during recording, so the application gets the same database responses it saw earlier.
 

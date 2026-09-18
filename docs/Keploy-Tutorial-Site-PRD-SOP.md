@@ -59,7 +59,7 @@ A Go backend developer who has never used Keploy, is comfortable with the termin
 
 The article itself is **out of scope for the AI editor to write**. The author has already drafted it in their own notes. The build must produce exactly one clearly marked insertion point:
 
-- File: `content/tutorial.mdx`
+- File: `doc/tutorial.mdx`
 - Marker: `{/* PASTE_ARTICLE_CONTENT_HERE */}`
 - Everything above the marker (frontmatter, title) and everything the layout renders around it (header, TOC, footer, theme toggle) must work correctly with **placeholder/lorem content** so the page is fully demoable before the real article is pasted in.
 - The placeholder content should still exercise every custom component (Callout, code block, step list) at least once, so that once real content replaces it, the author can see how each component is meant to be used.
@@ -113,7 +113,7 @@ Do not treat "write the tutorial" as part of this build. Treat it as "build a gr
 | Layer | Choice | Notes |
 |---|---|---|
 | Framework | Next.js (App Router, latest stable) | TypeScript project |
-| Content | MDX via `@next/mdx` | Content lives in `content/tutorial.mdx`, imported as a component |
+| Content | MDX via `@next/mdx` | Content lives in `doc/tutorial.mdx`, imported as a component |
 | Styling | Tailwind CSS + `@tailwindcss/typography` | Fast, consistent, easy dark mode via `class` strategy |
 | Component primitives (optional) | shadcn/ui | Only if extra polish is wanted for buttons/tabs; not required |
 | Syntax highlighting | `rehype-pretty-code` (Shiki-based) | Handles light/dark code themes natively |
@@ -266,7 +266,7 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   darkMode: 'class',
-  content: ['./app/**/*.{ts,tsx,mdx}', './components/**/*.{ts,tsx}', './content/**/*.mdx'],
+  content: ['./app/**/*.{ts,tsx,mdx}', './components/**/*.{ts,tsx}', './doc/**/*.mdx'],
   theme: {
     extend: {
       typography: {
@@ -365,7 +365,7 @@ import { Footer } from '@/components/footer';
 import { TableOfContents } from '@/components/table-of-contents';
 import { ReadingProgressBar } from '@/components/reading-progress-bar';
 import { BackToTop } from '@/components/back-to-top';
-import TutorialContent from '@/content/tutorial.mdx';
+import TutorialContent from '@/doc/tutorial.mdx';
 
 export default function Page() {
   return (
@@ -391,7 +391,7 @@ export default function Page() {
 
 ## Phase 10 — Create the content placeholder
 
-Create `content/tutorial.mdx` using the exact template in the **Appendix** below. Do not skip the placeholder marker — it is the handoff point between this spec and the author's real article.
+Create `doc/tutorial.mdx` using the exact template in the **Appendix** below. Do not skip the placeholder marker — it is the handoff point between this spec and the author's real article.
 
 ## Phase 11 — Polish pass
 
@@ -443,7 +443,7 @@ Make sure `.gitignore` excludes `node_modules/`, `.next/`, and any local env fil
 
 # APPENDIX — Article Placeholder Template
 
-Use this exact file as the starting point for `content/tutorial.mdx`. Everything below the marker is where the author's already-written article goes.
+Use this exact file as the starting point for `doc/tutorial.mdx`. Everything below the marker is where the author's already-written article goes.
 
 ```mdx
 export const metadata = {

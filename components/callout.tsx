@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 const styles = {
@@ -16,6 +16,16 @@ const styles = {
     box: 'border-l-emerald-500 bg-emerald-500/10 text-foreground',
     icon: CheckCircle2,
     iconClass: 'text-emerald-600 dark:text-emerald-400',
+  },
+  note: {
+    box: 'border-l-red-500 border border-red-500/20 bg-red-500/10 text-foreground dark:bg-red-950/25 dark:border-red-500/30 shadow-sm [&_code]:border-red-500/20 [&_code]:bg-red-500/10 [&_code]:text-red-700 dark:[&_code]:text-red-300 [&_strong]:text-red-600 dark:[&_strong]:text-red-400',
+    icon: AlertCircle,
+    iconClass: 'text-red-500 dark:text-red-400',
+  },
+  danger: {
+    box: 'border-l-red-500 border border-red-500/20 bg-red-500/10 text-foreground dark:bg-red-950/25 dark:border-red-500/30 shadow-sm [&_code]:border-red-500/20 [&_code]:bg-red-500/10 [&_code]:text-red-700 dark:[&_code]:text-red-300 [&_strong]:text-red-600 dark:[&_strong]:text-red-400',
+    icon: AlertCircle,
+    iconClass: 'text-red-500 dark:text-red-400',
   },
 } as const;
 

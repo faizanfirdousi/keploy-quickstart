@@ -52,7 +52,7 @@ export function Hero() {
       </h1>
 
       <p className="mt-2 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
-        Record, mock, and replay integration tests — no test code required
+        Record, mock, and replay integration tests with no test code
       </p>
 
       {/* Authoritative Lead Description */}
