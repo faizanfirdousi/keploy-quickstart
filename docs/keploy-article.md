@@ -57,7 +57,7 @@ docker compose up -d postgres
 docker compose ps //wait until the container is healthy
 ```
 
-note: we can also do docker compose up and simultaneously start postgres and go-app but the problem is 
+**Note:** We initially tried running the Go application through Docker Compose with Keploy, but the Keploy agent failed to initialize its eBPF hooks with `neither debugfs nor tracefs are mounted`. The agent container could not access the required Linux tracing filesystem (`tracefs`), so it exited before the Go application started; running Keploy natively on the host worked because the host already had the required tracing interfaces available.
 
 ### Build and Run the go server
 

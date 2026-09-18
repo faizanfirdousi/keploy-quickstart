@@ -46,7 +46,8 @@ docker compose up -d postgres
 docker compose ps //wait until the container is healthy
 ```
 
-note: we can also do docker compose up and simultaneously start postgres and go-app but the problem is
+**Note:** I initially tried running the Go application through Docker Compose with Keploy, but the Keploy agent failed to initialize its eBPF hooks with `neither debugfs nor tracefs are mounted`. The agent container could not access the required Linux tracing filesystem (`tracefs`), so it exited before the Go application started; running Keploy natively on the host worked because the host already had the required tracing interfaces available.
+
 
 ### Build and Run the Go Server
 
@@ -88,6 +89,8 @@ So what Keploy does is **observe the real interactions happening while your appl
 
 For our application, that means we don't need to manually write a test for `POST /url`, define what the response should look like, or create a mock PostgreSQL response. We simply run the application through Keploy, make the API calls we want to test, and **Keploy turns those real interactions into test data that it can replay later**. So let's start the application in record mode and make our first request.
 
+<RecordDiagram />
+
 ```bash
 sudo -E PATH=$PATH keploy record -c "./echo-psql-url-shortener"
 ```
@@ -114,9 +117,6 @@ When you ran `keploy record`, Keploy started your application under its instrume
 
 Keploy then uses these captured interactions to generate the test cases and mocks needed to replay the same flow later. All of this gets stored inside the `keploy` directory.
 
-<RecordDiagram />
-
-
 Let's open the `keploy` directory and see what Keploy generated for us. You'll find the recorded **test cases** containing the API requests and responses, along with **mocks** containing the captured interactions with PostgreSQL. These are the artifacts Keploy will use to replay our requests and verify the application behavior during testing.
 
 Now let's understand what each of these files contains and how Keploy uses them when we run the test.
@@ -133,20 +133,6 @@ Once you run `keploy test`, Keploy starts the application again and replays the 
 
 Keploy then compares the application's current responses with the recorded responses and reports whether the test passed or failed.
 
-```txt
-Recorded testcase
-       ↓
-keploy test
-       ↓
-Go application
-       ↓
-Keploy mocks
-       ↓
-PostgreSQL responses replayed
-       ↓
-Compare with recorded response
-       ↓
-   PASS / FAIL
-```
+<ReplayDiagram />
 
 The important part is what we **didn't** have to do: we didn't write the test case, manually create database mocks, or set up PostgreSQL again. We recorded one real interaction, and Keploy turned that interaction into a repeatable integration test. This is what makes the workflow useful as the application grows, adding coverage can start with simply exercising the application rather than manually building every test and its dependency state.

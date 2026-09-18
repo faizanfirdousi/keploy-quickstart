@@ -4,6 +4,7 @@ import { Steps, Step } from '@/components/steps';
 import { PreWithCopy } from '@/components/pre-with-copy';
 import { SystemDiagram } from '@/components/system-diagram';
 import { RecordDiagram } from '@/components/record-diagram';
+import { ReplayDiagram } from '@/components/replay-diagram';
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -17,6 +18,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Step,
     SystemDiagram,
     RecordDiagram,
+    ReplayDiagram,
     ...components,
   };
 }

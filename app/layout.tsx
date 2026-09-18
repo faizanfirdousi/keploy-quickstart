@@ -39,6 +39,14 @@ export const metadata: Metadata = {
     description:
       'Record and replay API tests with Keploy on a Go Echo + PostgreSQL sample app.',
   },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
