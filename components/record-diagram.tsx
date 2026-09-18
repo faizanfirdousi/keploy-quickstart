@@ -488,7 +488,6 @@ function DesktopRecordDiagram() {
         y={38}
         width={180}
         height={68}
-        badge="keploy record"
         hatch="rec-d-hatch-orange"
         stroke="#f97316"
         innerStroke="#fb923c"
@@ -652,7 +651,6 @@ function MobileRecordDiagram() {
         y={36}
         width={180}
         height={62}
-        badge="keploy record"
         hatch="rec-m-hatch-orange"
         stroke="#f97316"
         innerStroke="#fb923c"
