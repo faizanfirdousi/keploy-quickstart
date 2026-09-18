@@ -48,20 +48,23 @@ export function Hero() {
 
       {/* Main Documentation Headline with Big Typography */}
       <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-[2.65rem] lg:leading-[1.12]">
-        Echo SQL Sample Application
+        Test a Go Echo + PostgreSQL API with Keploy
       </h1>
 
       <p className="mt-2 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
-        Zero-Code Integration Testing & Dependency Virtualization for Go
+        Record, mock, and replay integration tests — no test code required
       </p>
 
       {/* Authoritative Lead Description */}
       <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-        Learn how to capture real HTTP network traffic and PostgreSQL database queries from a Go Echo URL shortener application using Keploy, auto-generate deterministic integration test cases with database mocks, and replay tests with zero manual test code.
+        In this tutorial, you&apos;ll use Keploy to record HTTP requests and PostgreSQL interactions from a Go Echo URL shortener. Keploy will turn those interactions into test cases and mocks that you can replay without connecting to PostgreSQL.
       </p>
 
-      {/* Technical Specifications Matrix */}
+      {/* Application Stack Tags */}
       <div className="mt-6 flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Sample App:
+        </span>
         <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2.5 py-1 font-mono text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           Go 1.20+
@@ -72,7 +75,7 @@ export function Hero() {
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2.5 py-1 font-mono text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-          PostgreSQL 15+
+          PostgreSQL 10.5
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-md border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 font-medium text-orange-400">
           <Zap size={12} />
@@ -102,8 +105,8 @@ export function Hero() {
               1
             </span>
             <div>
-              <span className="block text-xs font-semibold text-foreground">Record Traffic</span>
-              <span className="text-xs text-muted-foreground">Capture real API calls and SQL queries via eBPF</span>
+              <span className="block text-xs font-semibold text-foreground">Record real traffic</span>
+              <span className="text-xs text-muted-foreground">Capture API requests, responses, and dependency interactions.</span>
             </div>
           </div>
           <div className="flex items-start gap-2.5">
@@ -111,8 +114,8 @@ export function Hero() {
               2
             </span>
             <div>
-              <span className="block text-xs font-semibold text-foreground">Auto-Generate Mocks</span>
-              <span className="text-xs text-muted-foreground">Store deterministic YAML mocks of database responses</span>
+              <span className="block text-xs font-semibold text-foreground">Generate test artifacts</span>
+              <span className="text-xs text-muted-foreground">Turn recorded interactions into reusable test cases and mocks.</span>
             </div>
           </div>
           <div className="flex items-start gap-2.5">
@@ -120,8 +123,8 @@ export function Hero() {
               3
             </span>
             <div>
-              <span className="block text-xs font-semibold text-foreground">Replay Regression Tests</span>
-              <span className="text-xs text-muted-foreground">Validate code changes without running PostgreSQL</span>
+              <span className="block text-xs font-semibold text-foreground">Replay without dependencies</span>
+              <span className="text-xs text-muted-foreground">Run the recorded requests against your application while Keploy serves the captured dependency responses.</span>
             </div>
           </div>
         </div>

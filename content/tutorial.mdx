@@ -14,7 +14,7 @@ Integration testing is very painful because to reproduce the exact environment, 
 
 Keploy solves pretty much all of this pain by taking an approach where you literally don't have to write any test cases, mocks, or expected responses. Instead, Keploy does it for you. It captures the application's real interactions and uses them to generate reproducible test cases and mocks. This lets your tests reflect how the application actually behaves, while reducing the effort of maintaining test data and external dependencies. But how does this actually work inside a Go application? Let's build a simple example and walk through the process step by step.
 
-## The Application We'll Be Testing
+## How the Sample Application Works
 
 For this tutorial, we'll use a small Go-based URL shortener built with Echo. It takes a long URL, generates a short ID for it, and stores the mapping in PostgreSQL so the short URL can later redirect to the original one.
 
@@ -27,23 +27,54 @@ POST /url
 {"url": "https://github.com"}
 ```
 
+## Prerequisites
+
+Before starting, ensure your environment meets the following requirements:
+
+- **Go 1.20+** installed
+- **Docker** and Docker Compose installed and running (to run the PostgreSQL dependency)
+- **Linux or WSL environment supported by Keploy** (Linux kernel 5.10+ is required for Keploy's eBPF instrumentation)
+- **Keploy CLI installed** — see the [Keploy Installation Guide](https://keploy.io/docs/server/introduction/installation/) for native script and Docker installation options:
+  ```bash
+  curl --silent -O -L https://keploy.io/install.sh && source install.sh
+  ```
+- **A terminal** with `curl` available to send test requests
+
 ## Setup the Application
 
-setting up this is really simple, first
-clone the repo and go to echo-sql directory
+Clone the sample repository and move into the echo-sql directory:
 
 ```bash
-git clone https://github.com/keploy/samples-go.git && cd samples-go/echo-sql
+git clone https://github.com/keploy/samples-go.git
+cd samples-go/echo-sql
 go mod download
 ```
 
-change the line 47 of main.go to "localhost" instead of "postgresDb"
+Open `main.go` and change the PostgreSQL host from `postgresDb` to `localhost`:
+
+```go
+Database, err = NewConnection(ctx, ConnectionDetails{
+	host: "postgresDb", // [!code --]
+	host: "localhost",  // [!code ++]
+	port: "5432",
+	user: "postgres",
+	password: "password",
+	dbName: "keploy",
+})
+```
 
 ### Start PostgreSQL
 
 ```bash
 docker compose up -d postgres
-docker compose ps //wait until the container is healthy
+docker compose ps
+```
+
+Wait until the PostgreSQL container reports a `healthy` status before continuing:
+
+```text
+NAME         IMAGE           COMMAND                  SERVICE    CREATED          STATUS                   PORTS
+postgresDb   postgres:10.5   "docker-entrypoint.s…"   postgres   12 seconds ago   Up 11 seconds (healthy)   0.0.0.0:5432->5432/tcp
 ```
 
 **Note:** I initially tried running the Go application through Docker Compose with Keploy, but the Keploy agent failed to initialize its eBPF hooks with `neither debugfs nor tracefs are mounted`. The agent container could not access the required Linux tracing filesystem (`tracefs`), so it exited before the Go application started; running Keploy natively on the host worked because the host already had the required tracing interfaces available.
@@ -78,9 +109,7 @@ curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' \
   --url "http://localhost:8082/<SHORT_ID>"
 ```
 
-## Use Keploy
-
-now that you understand how the API works, now we will use keploy
+## Record Real Traffic with Keploy
 
 first thing we need to do is record with keploy
 what is record, what are we recording ?
@@ -111,7 +140,7 @@ curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' \
   --url "http://localhost:8082/<SHORT_ID>"
 ```
 
-## What Just Happened?
+## Inspect the Recorded Test Cases and Mocks
 
 When you ran `keploy record`, Keploy started your application under its instrumentation and captured the interactions happening while we made those API requests. The requests still went to the real PostgreSQL database, so Keploy could observe both the API request/response and the application's interactions with PostgreSQL.
 
