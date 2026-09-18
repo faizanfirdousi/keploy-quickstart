@@ -1,6 +1,9 @@
 function HatchDefs({ prefix }: { prefix: string }) {
   return (
     <defs>
+      <filter id={`${prefix}-blur`} x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2.5" />
+      </filter>
       <pattern
         id={`${prefix}-hatch`}
         width="8"
@@ -45,6 +48,7 @@ function DashedBox({
   innerStroke,
   outerDashed = true,
   lines,
+  prefix,
 }: {
   x: number;
   y: number;
@@ -55,10 +59,28 @@ function DashedBox({
   innerStroke: string;
   outerDashed?: boolean;
   lines: string[];
+  prefix: string;
 }) {
   const inset = 8;
+  const innerW = width - inset * 2;
+  const innerH = height - inset * 2;
+  const clipId = `${hatch}-clip-${Math.round(x)}-${Math.round(y)}`;
+
+  const tint = hatch.includes('green')
+    ? '#07140b'
+    : hatch.includes('blue')
+      ? '#07101c'
+      : '#121212';
+
   return (
     <g>
+      <defs>
+        <clipPath id={clipId}>
+          <rect x={x + inset} y={y + inset} width={innerW} height={innerH} />
+        </clipPath>
+      </defs>
+
+      {/* 1. Outer full-intensity zigzag pattern (visible in the 8px border margin) */}
       <rect
         x={x}
         y={y}
@@ -69,30 +91,52 @@ function DashedBox({
         strokeWidth="1.6"
         strokeDasharray={outerDashed ? '6 5' : undefined}
       />
+
+      {/* 2. Inner box: blurred zigzag pattern */}
+      <g clipPath={`url(#${clipId})`}>
+        <rect
+          x={x + inset}
+          y={y + inset}
+          width={innerW}
+          height={innerH}
+          fill={`url(#${hatch})`}
+          filter={`url(#${prefix}-blur)`}
+        />
+      </g>
+
+      {/* 3. Translucent fill overlay to soften the pattern and give contrast */}
       <rect
         x={x + inset}
         y={y + inset}
-        width={width - inset * 2}
-        height={height - inset * 2}
+        width={innerW}
+        height={innerH}
+        fill={tint}
+        fillOpacity="0.84"
+      />
+
+      {/* 4. Inner dashed stroke */}
+      <rect
+        x={x + inset}
+        y={y + inset}
+        width={innerW}
+        height={innerH}
         fill="none"
         stroke={innerStroke}
         strokeWidth="1.15"
         strokeDasharray="4 4"
       />
+
+      {/* 5. Clear, readable text */}
       {lines.map((line, i) => (
         <text
           key={line}
           x={x + width / 2}
-          y={
-            y +
-            height / 2 +
-            (i - (lines.length - 1) / 2) * 16
-          }
+          y={y + height / 2 + (i - (lines.length - 1) / 2) * 16}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#ececec"
+          fill="#f4f4f5"
           fontSize="13"
-          fontWeight="500"
+          fontWeight="600"
           letterSpacing="0.16em"
           fontFamily="var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
         >
@@ -112,6 +156,7 @@ function Cylinder({
   hatch,
   clipId,
   lines,
+  prefix,
 }: {
   cx: number;
   top: number;
@@ -121,10 +166,19 @@ function Cylinder({
   hatch: string;
   clipId: string;
   lines: string[];
+  prefix: string;
 }) {
   const bottom = top + body;
   const left = cx - rx;
   const right = cx + rx;
+
+  const inset = 8;
+  const innerLeft = left + inset;
+  const innerRx = rx - inset;
+  const innerTop = top + ry + 4;
+  const innerBottom = bottom - ry - 4;
+  const innerHeight = innerBottom - innerTop;
+  const innerClipId = `${clipId}-inner`;
 
   return (
     <g>
@@ -139,7 +193,18 @@ function Cylinder({
                 Z`}
           />
         </clipPath>
+        <clipPath id={innerClipId}>
+          <rect
+            x={innerLeft}
+            y={innerTop}
+            width={innerRx * 2}
+            height={innerHeight}
+            rx={innerRx / 2}
+          />
+        </clipPath>
       </defs>
+
+      {/* Outer cylinder body with sharp full-intensity hatch */}
       <rect
         x={left}
         y={top}
@@ -148,6 +213,31 @@ function Cylinder({
         fill={`url(#${hatch})`}
         clipPath={`url(#${clipId})`}
       />
+
+      {/* Inner blurred hatch */}
+      <g clipPath={`url(#${innerClipId})`}>
+        <rect
+          x={innerLeft}
+          y={innerTop}
+          width={innerRx * 2}
+          height={innerHeight}
+          fill={`url(#${hatch})`}
+          filter={`url(#${prefix}-blur)`}
+        />
+      </g>
+
+      {/* Inner translucent overlay */}
+      <rect
+        x={innerLeft}
+        y={innerTop}
+        width={innerRx * 2}
+        height={innerHeight}
+        rx={innerRx / 2}
+        fill="#07101c"
+        fillOpacity="0.84"
+      />
+
+      {/* Cylinder outlines and ellipses */}
       <path
         d={`M ${left} ${top + ry}
             L ${left} ${bottom - ry}
@@ -178,6 +268,7 @@ function Cylinder({
         strokeWidth="1.6"
         strokeDasharray="6 5"
       />
+
       {lines.map((line, i) => (
         <text
           key={line}
@@ -185,9 +276,9 @@ function Cylinder({
           y={top + body / 2 + 6 + (i - (lines.length - 1) / 2) * 16}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#ececec"
+          fill="#f4f4f5"
           fontSize="11"
-          fontWeight="500"
+          fontWeight="600"
           letterSpacing="0.14em"
           fontFamily="var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
         >
@@ -257,6 +348,7 @@ function DesktopDiagram() {
         hatch="sys-d-hatch"
         stroke="#8d8d8d"
         innerStroke="#6f6f6f"
+        prefix="sys-d"
         lines={['CLIENT']}
       />
       <DashedBox
@@ -268,6 +360,7 @@ function DesktopDiagram() {
         stroke="#22c55e"
         innerStroke="#4ade80"
         outerDashed={false}
+        prefix="sys-d"
         lines={['GO API']}
       />
       <Cylinder
@@ -278,6 +371,7 @@ function DesktopDiagram() {
         body={144}
         hatch="sys-d-hatch-blue"
         clipId="sys-d-cyl"
+        prefix="sys-d"
         lines={['POSTGRESQL']}
       />
 
@@ -327,6 +421,7 @@ function MobileDiagram() {
         hatch="sys-m-hatch"
         stroke="#8d8d8d"
         innerStroke="#6f6f6f"
+        prefix="sys-m"
         lines={['CLIENT']}
       />
       <DashedBox
@@ -338,6 +433,7 @@ function MobileDiagram() {
         stroke="#22c55e"
         innerStroke="#4ade80"
         outerDashed={false}
+        prefix="sys-m"
         lines={['GO API']}
       />
       <Cylinder
@@ -348,6 +444,7 @@ function MobileDiagram() {
         body={118}
         hatch="sys-m-hatch-blue"
         clipId="sys-m-cyl"
+        prefix="sys-m"
         lines={['POSTGRESQL']}
       />
 

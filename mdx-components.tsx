@@ -3,6 +3,7 @@ import { Callout } from '@/components/callout';
 import { Steps, Step } from '@/components/steps';
 import { PreWithCopy } from '@/components/pre-with-copy';
 import { SystemDiagram } from '@/components/system-diagram';
+import { RecordDiagram } from '@/components/record-diagram';
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -15,6 +16,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Steps,
     Step,
     SystemDiagram,
+    RecordDiagram,
     ...components,
   };
 }

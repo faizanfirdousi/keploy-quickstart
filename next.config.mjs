@@ -22,9 +22,13 @@ const withMDX = createMDX({
       [
         rehypePrettyCode,
         {
-          theme: 'catppuccin-mocha',
-          keepBackground: true,
-          defaultLang: 'text',
+          theme: 'vesper',
+          bypassInlineCode: true,
+          keepBackground: false,
+          defaultLang: {
+            block: 'text',
+            inline: 'text',
+          },
           transformers: [
             transformerNotationDiff(),
             transformerNotationHighlight(),

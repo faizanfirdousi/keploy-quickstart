@@ -124,21 +124,41 @@ When you ran `keploy record`, Keploy started your application under its instrume
 Keploy then uses these captured interactions to generate the test cases and mocks needed to replay the same flow later. All of this gets stored inside the `keploy` directory.
 
 ```text
-curl
-  ↓
-Keploy
-  ↓
-Go application
-  ↓
-PostgreSQL
-  ↓
-Response
-
-        ↓
-
-   keploy/
-   ├── tests/
-   └── mocks.yaml
+                         keploy record
+                              │
+                              ▼
+                     ┌─────────────────┐
+                     │     Keploy      │
+                     │   Record Mode   │
+                     │     (eBPF)      │
+                     └────────┬────────┘
+                              │
+                              │ captures & instruments
+                              ▼
+┌──────────┐        HTTP     ┌────────────────┐
+│  Client  │ ──────────────► │ Go Application │
+│  (curl)  │                 │                │
+│          │ ◄────────────── │ URL Shortener  │
+└──────────┘     Response    └───────┬────────┘
+                                     │
+                            outgoing │ SQL queries
+                                     │
+                                     ▼
+                              ┌─────────────┐
+                              │ PostgreSQL  │
+                              │     DB      │
+                              └──────┬──────┘
+                                     │
+                              captured by
+                                 Keploy
+                                     │
+                                     ▼
+                         ┌─────────────────────┐
+                         │   keploy/           │
+                         │   ├── tests/        │
+                         │   │   └── test-1.yml│
+                         │   └── mocks.yaml    │
+                         └─────────────────────┘
 ```
 
 Let's open the `keploy` directory and see what Keploy generated for us. You’ll find the recorded **test cases** containing the API requests and responses, along with **mocks** containing the captured interactions with PostgreSQL. These are the artifacts Keploy will use to replay our requests and verify the application behavior during testing.
