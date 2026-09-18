@@ -4,15 +4,13 @@ export const metadata = {
     'Integration and E2E testing for your Go application with Keploy.',
 };
 
-This is a detailed tutorial about how you can use Keploy to do integration as well as E2E testing to your go lang application, ( more abotu applicaiton), by end of this you will learn.
-
-## Problem with traditional testing :
+## Problem with Traditional Testing
 
 Traditionally, API testing is very manual and maintenance-heavy. You write unit tests, integration tests, and end-to-end tests by manually constructing requests and defining expected responses for each and every feature. Even though it is doable for small use cases like unit tests, or if the application has fewer dependencies, if the application has multiple dependencies like databases, queues, and third-party APIs, it exponentially becomes harder.
 
 Integration testing is very painful because to reproduce the exact environment, you need to set up databases with the correct schema, configure environment variables, and prepare everything in the exact way it is supposed to work. The other way is to make mocks for each external dependency, but they simulate what developers _expect_ a dependency to do rather than necessarily reflecting what that dependency actually does in production.
 
-## How Keploy solves this:
+## How Keploy Solves This
 
 Keploy solves pretty much all of this pain by taking an approach where you literally don't have to write any test cases, mocks, or expected responses. Instead, Keploy does it for you. It captures the application's real interactions and uses them to generate reproducible test cases and mocks. This lets your tests reflect how the application actually behaves, while reducing the effort of maintaining test data and external dependencies. But how does this actually work inside a Go application? Let's build a simple example and walk through the process step by step.
 
@@ -29,7 +27,7 @@ POST /url
 {"url": "https://github.com"}
 ```
 
-## Setup the application
+## Setup the Application
 
 setting up this is really simple, first
 clone the repo and go to echo-sql directory
@@ -41,7 +39,7 @@ go mod download
 
 change the line 47 of main.go to "localhost" instead of "postgresDb"
 
-### start postgres
+### Start PostgreSQL
 
 ```bash
 docker compose up -d postgres
@@ -50,7 +48,7 @@ docker compose ps //wait until the container is healthy
 
 note: we can also do docker compose up and simultaneously start postgres and go-app but the problem is
 
-### Build and Run the go server
+### Build and Run the Go Server
 
 ```bash
 go build -o echo-psql-url-shortener .
@@ -110,7 +108,7 @@ curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' \
   --url "http://localhost:8082/<SHORT_ID>"
 ```
 
-## What just happened?
+## What Just Happened?
 
 When you ran `keploy record`, Keploy started your application under its instrumentation and captured the interactions happening while we made those API requests. The requests still went to the real PostgreSQL database, so Keploy could observe both the API request/response and the application's interactions with PostgreSQL.
 
@@ -123,7 +121,7 @@ Let's open the `keploy` directory and see what Keploy generated for us. You'll f
 
 Now let's understand what each of these files contains and how Keploy uses them when we run the test.
 
-### Run the captured testcases
+### Run the Captured Test Cases
 
 Now that we have our testcase captured, run the test file.
 
