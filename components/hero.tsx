@@ -38,7 +38,7 @@ export function Hero() {
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs font-mono text-muted-foreground">
           <Terminal size={12} />
-          keploy v2.x
+          Keploy 3.x
         </span>
         <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-xs text-muted-foreground">
           <Clock size={12} />
@@ -52,7 +52,7 @@ export function Hero() {
       </h1>
 
       <p className="mt-2 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
-        Record, mock, and replay integration tests with no test code
+        Record real API traffic and replay with generated tests and mocks
       </p>
 
       {/* Authoritative Lead Description */}
